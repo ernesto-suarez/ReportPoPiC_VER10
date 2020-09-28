@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>PiMarkets Report</title>
+    <script charset="utf-8"
+        src="https://cdn.ethers.io/scripts/ethers-v4.min.js"
+        type="text/javascript">
+    </script>
+    <script type="text/javascript">
+        const URL = "https://connect.pichain.io";
+        const GRAPH_URL = "https://graph.pimarkets.io/subgraphs/name/gperezalba/bank-subgraph-mainnet";
+        const TOKENS_ARRAY = '["0x0000000000000000000000000000000000000000", "0x0dc5c612b313d583398aebcbc3185c6448542f2a", "0x0de6a7d5d6c00ed86b57779193e91151fc5b3aa1", "0x19fba3dba401388dc658670437df5c5971036a66", "0x458e54534d6efbf2b1b0569f6ff994957bb93c7f", "0x4c3c844b751c18299932dcd18a3032bd3481d61a", "0x4f38f0c9a26a480feae22c78576cd3a24dbce834", "0x4ffb535bbbbd3d74d2f593bd9c21daa946a68c56", "0x6645223d7947b4534f09dee35796e1c23326fc5b", "0x6e0c484e9efccf8d29ef229cc5b47b8b79ed8f97", "0x6e5040f4ba7a6ec228a5247fe690d5df73539b83", "0x77f4ab4a154cf41c0b812f0873a3491dd39f478a", "0x7b47E489c2eC1841c09b346CA1ADd03853A5dA85", "0x88a83a48bf4039023118ac760e6beaf5e6f110fb", "0xbe7a8d8c2a26a847bbde18a401066f196bf5657d", "0xc28ce4d4a4428415f810097244646ef23d0f7f22", "0xd9a7f80cd3552e30b62168164bd04c3b8e5dfcc0", "0xe1f2d5b6d86030660fc2e80965585af3163a1454", "0xf4a47b570d8d1c37552229e9acf3678eb9090c99", "0xfb75b3cd83d81937770e5955f3e6565bfecc195f"]';
+        const ONE_MONTH = 2592000;
+        const ONE_WEEK = 604800;
+        const ONE_DAY = 86400;
+
+        async function generateExcel() {
+            let tokensArray = getTokensArray();
+            let times = getTimestamps();
+            let timeLow = times[0];
+            let timeHigh = times[1];
+            let transactions = await getTransactions(timeLow, timeHigh, tokensArray);
+            console.log(transactions)
+            JSONToCSVConvertor(transactions, getTime(), true);
+        }
+
+        function getTimestamps() {
+            let timeHigh = 0;
+            let timeLow = 0;
+            let customDateCheckboxElement = document.getElementById("customDateCheckbox");
+
+            if (customDateCheckboxElement.checked) {
+                let fromDate = document.getElementById("fromDate").value;
+                
+                fromDate = fromDate.split("/");
+                let newFromDate = new Date( fromDate[2], fromDate[1] - 1, fromDate[0]);
+                timeLow = newFromDate.getTime() / 1000;
+
+
+                let toDate = document.getElementById("toDate").value;
+                toDate = toDate.split("/");
+                let newToDate = new Date( toDate[2], toDate[1] - 1, toDate[0]);
+                timeHigh = newToDate.getTime() / 1000;
+            } else {
+                let localTime = getUtcTime();
+                timeHigh = localTime;
+                let pastTimeElement = document.getElementById("pastTimeSelector");
+                let pastTime = pastTimeElement.options[pastTimeElement.selectedIndex].value;
+                timeLow = localTime - pastTime;
+            }
+
+            return [timeLow, timeHigh];
+        }
+
+        function getTokensArray() {
+            let selectorElement = document.getElementById("tokenAddressSelector");
+		    let tokensArray = selectorElement.options[selectorElement.selectedIndex].value;
+            return tokensArray;
+        }
+
+        async function getTransactions(timeLow, timeHigh, tokensArray) {
+            let skip = 0;
+            let query = '{ transactions(first: 1000, skip: ' + skip + ', where: {timestamp_gte: ' + timeLow + ', timestamp_lte: ' + timeHigh + ', currency_in: ' + tokensArray + '}, orderBy: timestamp, orderDirection: desc) { from { id name { id } } to { id name { id } } currency { tokenSymbol } amount timestamp } }';
+            console.log(query)
+            let queryTransactions = await querySubgraph(query);
+            let transactions = queryTransactions;
+
+            while(queryTransactions.length >= 1000) {
+                skip = transactions.length;
+                query = '{ transactions(first: 1000, skip: ' + skip + ', where: {timestamp_gte: ' + timeLow + ', timestamp_lte: ' + timeHigh + ', currency_in: ' + tokensArray + '}, orderBy: timestamp, orderDirection: desc) { from { id name { id } } to { id name { id } } currency { tokenSymbol } amount timestamp } }';
+                queryTransactions = await querySubgraph(query);
+                transactions = transactions.concat(queryTransactions);
+            }
+
+            return transactions;
+        }
+
+        async function querySubgraph(query) {
+            let response;
+            let responseData;
+
+            try {
+                response = await fetch(GRAPH_URL, {
+                    "method": 'POST',
+                    "headers": {
+                        "Accept": 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    "body": JSON.stringify({
+                        query: query
+                    }),
+                });
+
+                if (response.ok) {
+                    responseData = await response.json();
+                    return responseData.data.transactions;
+                } else {
+                    return null;
+                }   
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+
+        function getUtcTime() {
+            return parseInt(Date.now() / 1000);
+        }
+
+        function getTime() {
+            return timeConverter(Date.now() / 1000);
+        }
+
+        function timeConverter(UNIX_timestamp) {
+            var a = new Date(UNIX_timestamp * 1000);
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var year = a.getFullYear();
+            var month = months[a.getMonth()];
+            var date = a.getDate();
+            var hour = a.getHours();
+            var min = a.getMinutes();
+            var sec = a.getSeconds();
+            var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec;
+            return time;
+        }
+
+        function JSONToCSVConvertor(JSONData, ReportTitle, ShowLabel) {
+            //If JSONData is not an object then JSON.parse will parse the JSON string in an Object
+            var arrData = typeof JSONData != 'object' ? JSON.parse(JSONData) : JSONData;
+            
+            var CSV = 'sep=,' + '\r\n\n';
+
+            //This condition will generate the Label/Header
+            if (ShowLabel) {
+                var row = "";
+                
+                row += "Fecha" + ',';
+                row += "Divisa" + ',';
+                row += "Origen (wallet)" + ',';
+                row += "Origen (usuario)" + ',';
+                row += "Destino (wallet)" + ',';
+                row += "Destino (usuario)" + ',';
+                row += "Monto" + ',';
+
+                row = row.slice(0, -1);
+                
+                //append Label row with line break
+                CSV += row + '\r\n';
+            }
+            
+            //1st loop is to extract each row
+            for (var i = 0; i < arrData.length; i++) {
+                var row = "";
+                //console.log(arrData[i].to);
+
+                row += '"' + timeConverter(arrData[i].timestamp) + '",';
+                row += '"' + arrData[i].currency.tokenSymbol + '",';
+                row += '"' + arrData[i].from.id + '",';
+
+                if (arrData[i].from.name == null) {
+                    row += '"' + "" + '",';
+                } else {
+                    row += '"' + arrData[i].from.name.id + '",';
+                }
+
+                row += '"' + arrData[i].to.id + '",';
+                
+                if (arrData[i].to.name == null) {
+                    row += '"' + "" + '",';
+                } else {
+                    row += '"' + arrData[i].to.name.id + '",';
+                }
+
+                row += '"' + Math.round(arrData[i].amount/1e18 * 100) / 100 + '",';
+
+                row.slice(0, row.length - 1);
+                
+                //add a line break after each row
+                CSV += row + '\r\n';
+            }
+
+            if (CSV == '') {        
+                alert("Invalid data");
+                return;
+            }   
+            
+            //Generate a file name
+            var fileName = "Report_";
+            //this will remove the blank-spaces from the title and replace it with an underscore
+            fileName += ReportTitle.replace(/ /g,"_");   
+            
+            //Initialize file format you want csv or xls
+            var uri = 'data:text/csv;charset=utf-8,' + escape(CSV);
+            
+            // Now the little tricky part.
+            // you can use either>> window.open(uri);
+            // but this will not work in some browsers
+            // or you will not get the correct file extension    
+            
+            //this trick will generate a temp <a /> tag
+            var link = document.createElement("a");    
+            link.href = uri;
+            
+            //set the visibility hidden so it will not effect on your web-layout
+            link.style = "visibility:hidden";
+            link.download = fileName + ".csv";
+            
+            //this part will append the anchor tag and remove it after automatic click
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <style type='text/css'>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            font-weight: 400;
+            background-color: #004381
+        }
+        
+        h1 {
+            color: white;
+        }
+
+        h2 {
+            color: white;
+        }
+
+        h3 {
+            color: white;
+        }
+
+        h4 {
+            color: white;
+        }
+
+        h5 {
+            color: white;
+        }
+
+        .mySelector {
+            font-family: 'Open Sans', sans-serif;
+            font-weight: 400;
+            width: 150px;
+            font-size: 16px;
+        }
+
+        .myCheckbox {
+            font-color: white;
+            background-color: green;
+        }
+
+        label {
+            color:white;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .myButton {
+            box-shadow: 0px 1px 0px 0px #fff6af;
+            background:linear-gradient(to bottom, #ffec64 5%, #ffab23 100%);
+            background-color:#ffec64;
+            border-radius:6px;
+            border:1px solid #ffaa22;
+            display:inline-block;
+            cursor:pointer;
+            color:#333333;
+            font-family:Arial;
+            font-size:15px;
+            font-weight:bold;
+            padding:6px 24px;
+            text-decoration:none;
+            text-shadow:0px 1px 0px #ffee66;
+        }
+        .myButton:hover {
+            background:linear-gradient(to bottom, #ffab23 5%, #ffec64 100%);
+            background-color:#ffab23;
+        }
+        .myButton:active {
+            position:relative;
+            top:1px;
+        }
+
+        .redondeadonorelieve {
+            border-radius: 5px;
+            border: 1px solid #39c;
+            text-align: center;
+            line-height: 30px;
+        }
+
+        .center {
+            margin: auto;
+            padding: 10px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+    <div class="center">
+        <h1>PiMarkets</h1>
+        <h3> -- Reporte de Transacciones --</h3>
+        <br>
+        <h3>Seleccionar token</h3>
+
+        <select class="mySelector" name="tokenAddressSelector" id="tokenAddressSelector">
+            <option value='["0x0000000000000000000000000000000000000000", "0x0dc5c612b313d583398aebcbc3185c6448542f2a", "0x0de6a7d5d6c00ed86b57779193e91151fc5b3aa1", "0x19fba3dba401388dc658670437df5c5971036a66", "0x458e54534d6efbf2b1b0569f6ff994957bb93c7f", "0x4c3c844b751c18299932dcd18a3032bd3481d61a", "0x4f38f0c9a26a480feae22c78576cd3a24dbce834", "0x4ffb535bbbbd3d74d2f593bd9c21daa946a68c56", "0x6645223d7947b4534f09dee35796e1c23326fc5b", "0x6e0c484e9efccf8d29ef229cc5b47b8b79ed8f97", "0x6e5040f4ba7a6ec228a5247fe690d5df73539b83", "0x77f4ab4a154cf41c0b812f0873a3491dd39f478a", "0x7b47E489c2eC1841c09b346CA1ADd03853A5dA85", "0x88a83a48bf4039023118ac760e6beaf5e6f110fb", "0xbe7a8d8c2a26a847bbde18a401066f196bf5657d", "0xc28ce4d4a4428415f810097244646ef23d0f7f22", "0xd9a7f80cd3552e30b62168164bd04c3b8e5dfcc0", "0xe1f2d5b6d86030660fc2e80965585af3163a1454", "0xf4a47b570d8d1c37552229e9acf3678eb9090c99", "0xfb75b3cd83d81937770e5955f3e6565bfecc195f"]'>Todos</option>
+            <option value='["0x0000000000000000000000000000000000000000"]'>PI</option>
+            <option value='["0x0dc5c612b313d583398aebcbc3185c6448542f2a"]'>GLDs</option>
+            <option value='["0x0de6a7d5d6c00ed86b57779193e91151fc5b3aa1"]'>GLN</option>
+            <option value='["0x19fba3dba401388dc658670437df5c5971036a66"]'>MVZ.A</option>
+            <option value='["0x458e54534d6efbf2b1b0569f6ff994957bb93c7f"]'>PTR</option>
+            <option value='["0x4c3c844b751c18299932dcd18a3032bd3481d61a"]'>BTCx</option>
+            <option value='["0x4c3c844b751c18299932dcd18a3032bd3481d61a"]'>USC</option>
+            <option value='["0x4ffb535bbbbd3d74d2f593bd9c21daa946a68c56"]'>ETHx</option>
+            <option value='["0x6645223d7947b4534f09dee35796e1c23326fc5b"]'>EUR</option>
+            <option value='["0x6e0c484e9efccf8d29ef229cc5b47b8b79ed8f97"]'>PEN</option>
+            <option value='["0x6e5040f4ba7a6ec228a5247fe690d5df73539b83"]'>ARS</option>
+            <option value='["0x77f4ab4a154cf41c0b812f0873a3491dd39f478a"]'>USD</option>
+            <option value='["0x7b47E489c2eC1841c09b346CA1ADd03853A5dA85"]'>IMVx</option>
+            <option value='["0x88a83a48bf4039023118ac760e6beaf5e6f110fb"]'>VES</option>
+            <option value='["0xbe7a8d8c2a26a847bbde18a401066f196bf5657d"]'>COP</option>
+            <option value='["0xc28ce4d4a4428415f810097244646ef23d0f7f22"]'>CMTs</option>
+            <option value='["0xd2b28cc2de7284a24421aa12f598291ec30c7840"]'>VOTE</option>
+            <option value='["0xd9a7f80cd3552e30b62168164bd04c3b8e5dfcc0"]'>CLP</option>
+            <option value='["0xe1f2d5b6d86030660fc2e80965585af3163a1454"]'>PEL</option>
+            <option value='["0xf4a47b570d8d1c37552229e9acf3678eb9090c99"]'>USDTs</option>
+            <option value='["0xfb75b3cd83d81937770e5955f3e6565bfecc195f"]'>DIAs</option>
+        </select>
+        <br>
+        <br>
+        <hr style="color: #0056b2;" />
+        
+        <h3>Seleccionar fecha</h3>
+
+        <select class="mySelector" name="pastTimeSelector" id="pastTimeSelector">
+            <option value=86400>Últimas 24h</option>
+            <option value=604800>Última semana</option>
+            <option value=2592000>Último mes</option>
+        </select>
+        <br>
+        <br>
+        <input class="myCheckbox" type="checkbox" id="customDateCheckbox"/><label for="checkbox"> Usar fecha customizada</label>
+        <br>
+        <br>
+        <div style="color: white;">Desde</div>
+        <input type="text" class="redondeadonorelieve" id="fromDate" placeholder="(dd/mm/yyyy)">
+        <br>
+        <br>
+        <div style="color: white;" id="balances">Hasta</div>
+        <input type="text" class="redondeadonorelieve" id="toDate" placeholder="(dd/mm/yyyy)">
+        <br>
+        <br>
+        <hr style="color: #0056b2;" />
+        <br>
+        <button class="myButton" onclick="generateExcel();">Exportar</button>
+
+        
+
+        
+
+        
+        
+        
+    </div>
+  </body>
+</html>
