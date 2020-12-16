@@ -10,7 +10,8 @@
     <script type="text/javascript">
         const URL = "https://connect.pichain.io";
         const GRAPH_URL = "https://graph.pimarkets.io/subgraphs/name/gperezalba/bank-subgraph-mainnet";
-        const TOKENS_ARRAY = '["0x0000000000000000000000000000000000000000", "0x0dc5c612b313d583398aebcbc3185c6448542f2a", "0x0de6a7d5d6c00ed86b57779193e91151fc5b3aa1", "0x19fba3dba401388dc658670437df5c5971036a66", "0x458e54534d6efbf2b1b0569f6ff994957bb93c7f", "0x4c3c844b751c18299932dcd18a3032bd3481d61a", "0x4f38f0c9a26a480feae22c78576cd3a24dbce834", "0x4ffb535bbbbd3d74d2f593bd9c21daa946a68c56", "0x6645223d7947b4534f09dee35796e1c23326fc5b", "0x6e0c484e9efccf8d29ef229cc5b47b8b79ed8f97", "0x6e5040f4ba7a6ec228a5247fe690d5df73539b83", "0x77f4ab4a154cf41c0b812f0873a3491dd39f478a", "0x7b47E489c2eC1841c09b346CA1ADd03853A5dA85", "0x88a83a48bf4039023118ac760e6beaf5e6f110fb", "0xbe7a8d8c2a26a847bbde18a401066f196bf5657d", "0xc28ce4d4a4428415f810097244646ef23d0f7f22", "0xd9a7f80cd3552e30b62168164bd04c3b8e5dfcc0", "0xe1f2d5b6d86030660fc2e80965585af3163a1454", "0xf4a47b570d8d1c37552229e9acf3678eb9090c99", "0xfb75b3cd83d81937770e5955f3e6565bfecc195f"]';
+        const TOKENS_ARRAY = '["0x0000000000000000000000000000000000000000", "0x67f3C0b9ABdFCBDC035E4D9845Ce60d02CCd3311"]';
+        const ONE_Year = 31104000;
         const ONE_MONTH = 2592000;
         const ONE_WEEK = 604800;
         const ONE_DAY = 86400;
@@ -308,41 +309,9 @@
         <h3>Seleccionar token</h3>
 
         <select class="mySelector" name="tokenAddressSelector" id="tokenAddressSelector">
-            <option value='["0x0000000000000000000000000000000000000000", "0x0dc5c612b313d583398aebcbc3185c6448542f2a", "0x0de6a7d5d6c00ed86b57779193e91151fc5b3aa1", "0x19fba3dba401388dc658670437df5c5971036a66", "0x458e54534d6efbf2b1b0569f6ff994957bb93c7f", "0x4c3c844b751c18299932dcd18a3032bd3481d61a", "0x4f38f0c9a26a480feae22c78576cd3a24dbce834", "0x4ffb535bbbbd3d74d2f593bd9c21daa946a68c56", "0x6645223d7947b4534f09dee35796e1c23326fc5b", "0x6e0c484e9efccf8d29ef229cc5b47b8b79ed8f97", "0x6e5040f4ba7a6ec228a5247fe690d5df73539b83", "0x77f4ab4a154cf41c0b812f0873a3491dd39f478a", "0x7b47E489c2eC1841c09b346CA1ADd03853A5dA85", "0x88a83a48bf4039023118ac760e6beaf5e6f110fb", "0xbe7a8d8c2a26a847bbde18a401066f196bf5657d", "0xc28ce4d4a4428415f810097244646ef23d0f7f22", "0xd9a7f80cd3552e30b62168164bd04c3b8e5dfcc0", "0xe1f2d5b6d86030660fc2e80965585af3163a1454", "0xf4a47b570d8d1c37552229e9acf3678eb9090c99", "0xfb75b3cd83d81937770e5955f3e6565bfecc195f", "0x8e4B37a1B65cE5E78616259584662341Fb667345", "0x9e7b83875339c13cbda56a0594fb0fe4077de221", "0xa58e2aa440308ec13886e7dcfb5bd48e8bad8575", "0xdf6051372ecf1aff4fe6fa2daa9c0e2a1402b7e7", "0x1e4420f5d619d09bb4a2ff4e6e4e1b227c62e1ee", "0xb8d97adda7e42fd9d6d2d615747cebd7c137ea0f", "0x1ff246a656899834a6db02aa5e1858eeaa4bbf9a", "0xa3ea0b1a827f441be7b115872ab6b0c281c6faa5", "0xa1cbdba4785d979cce8db529ca1e2ec592b8dbbe", "0x7af5c748770c5d6fb8f1f949e6892aadcdc4fd52", "0x2de43e0caaf0e1e3f56e6178bd6fa327a6748725", "0xa9ef9175af217a7230e5f8c8c5544f29773f11ca"]'>Todos</option>
+            <option value='["0x0000000000000000000000000000000000000000", "0x67f3C0b9ABdFCBDC035E4D9845Ce60d02CCd3311"]'>Todos</option>
             <option value='["0x0000000000000000000000000000000000000000"]'>PI</option>
-            <option value='["0x0dc5c612b313d583398aebcbc3185c6448542f2a"]'>GLDs</option>
-            <option value='["0x0de6a7d5d6c00ed86b57779193e91151fc5b3aa1"]'>GLN</option>
-            <option value='["0x19fba3dba401388dc658670437df5c5971036a66"]'>MVZ.A</option>
-            <option value='["0x458e54534d6efbf2b1b0569f6ff994957bb93c7f"]'>PTR</option>
-            <option value='["0x4c3c844b751c18299932dcd18a3032bd3481d61a"]'>BTCx</option>
-            <option value='["0x4c3c844b751c18299932dcd18a3032bd3481d61a"]'>USC</option>
-            <option value='["0x4ffb535bbbbd3d74d2f593bd9c21daa946a68c56"]'>ETHx</option>
-            <option value='["0x6645223d7947b4534f09dee35796e1c23326fc5b"]'>EUR</option>
-            <option value='["0x6e0c484e9efccf8d29ef229cc5b47b8b79ed8f97"]'>PEN</option>
-            <option value='["0x6e5040f4ba7a6ec228a5247fe690d5df73539b83"]'>ARS</option>
-            <option value='["0x77f4ab4a154cf41c0b812f0873a3491dd39f478a"]'>USD</option>
-            <option value='["0x7b47E489c2eC1841c09b346CA1ADd03853A5dA85"]'>IMVx</option>
-            <option value='["0x88a83a48bf4039023118ac760e6beaf5e6f110fb"]'>VES</option>
-            <option value='["0xbe7a8d8c2a26a847bbde18a401066f196bf5657d"]'>COP</option>
-            <option value='["0xc28ce4d4a4428415f810097244646ef23d0f7f22"]'>CMTs</option>
-            <option value='["0xd2b28cc2de7284a24421aa12f598291ec30c7840"]'>VOTE</option>
-            <option value='["0xd9a7f80cd3552e30b62168164bd04c3b8e5dfcc0"]'>CLP</option>
-            <option value='["0xe1f2d5b6d86030660fc2e80965585af3163a1454"]'>PEL</option>
-            <option value='["0xf4a47b570d8d1c37552229e9acf3678eb9090c99"]'>USDTs</option>
-            <option value='["0xfb75b3cd83d81937770e5955f3e6565bfecc195f"]'>DIAs</option>
-
-            <option value='["0x7af5c748770c5d6fb8f1f949e6892aadcdc4fd52"]'>RST</option>
-            <option value='["0x2de43e0caaf0e1e3f56e6178bd6fa327a6748725"]'>FVI.B</option>
-            <option value='["0xa9ef9175af217a7230e5f8c8c5544f29773f11ca"]'>GZL</option>
-            <option value='["0xa1cbdba4785d979cce8db529ca1e2ec592b8dbbe"]'>BOU</option>
-            <option value='["0xa3ea0b1a827f441be7b115872ab6b0c281c6faa5"]'>BPV</option>
-            <option value='["0x1ff246a656899834a6db02aa5e1858eeaa4bbf9a"]'>ENV</option>
-            <option value='["0xb8d97adda7e42fd9d6d2d615747cebd7c137ea0f"]'>FVI.A</option>
-            <option value='["0x1e4420f5d619d09bb4a2ff4e6e4e1b227c62e1ee"]'>PGR</option>
-            <option value='["0xdf6051372ecf1aff4fe6fa2daa9c0e2a1402b7e7"]'>CRMA</option>
-            <option value='["0xa58e2aa440308ec13886e7dcfb5bd48e8bad8575"]'>BNC</option>
-            <option value='["0x9e7b83875339c13cbda56a0594fb0fe4077de221"]'>TDVD</option>
-            <option value='["0x8e4B37a1B65cE5E78616259584662341Fb667345"]'>GLDx</option>
+            <option value='["0x67f3C0b9ABdFCBDC035E4D9845Ce60d02CCd3311"]'>PoPiC</option>
         </select>
         <br>
         <br>
@@ -354,6 +323,7 @@
             <option value=86400>Últimas 24h</option>
             <option value=604800>Última semana</option>
             <option value=2592000>Último mes</option>
+            <option value=31104000>Último año</option>
         </select>
         <br>
         <br>
